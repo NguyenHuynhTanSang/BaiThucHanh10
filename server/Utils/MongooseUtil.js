@@ -1,15 +1,9 @@
-// Utils/MongooseUtil.js
 const mongoose = require('mongoose');
-const MyConstants = require('./Utils');  // nếu file tên MyConstants.js thì đổi thành './MyConstants'
+const MyConstants = require('./utils');
 
-const uri =
-  'mongodb+srv://' +
-  MyConstants.DB_USER + ':' +
-  MyConstants.DB_PASS + '@' +
-  MyConstants.DB_SERVER + '/' +
-  MyConstants.DB_DATABASE;
+const uri = MyConstants.DB_CONNECTION;
 
-console.log('Connecting to Mongo with URI:', uri);
+console.log('Connecting to Mongo...');
 
 mongoose
   .connect(uri)
