@@ -3,8 +3,11 @@ import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 import CartUtil from '../utils/CartUtil';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Mycart extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   render() {
     const mycart = this.context.mycart.map((item, index) => {
@@ -14,11 +17,22 @@ class Mycart extends Component {
           <td>{item.product._id}</td>
           <td>{item.product.name}</td>
           <td>{item.product.category.name}</td>
-          <td><img src={'data:image/jpg;base64,' + item.product.image} width="70px" height="70px" alt="" /></td>
+          <td>
+            <img
+              src={'data:image/jpg;base64,' + item.product.image}
+              width="70px"
+              height="70px"
+              alt=""
+            />
+          </td>
           <td>{item.product.price}</td>
           <td>{item.quantity}</td>
           <td>{item.product.price * item.quantity}</td>
-          <td><span className="link" onClick={() => this.lnkRemoveClick(item.product._id)}>Remove</span></td>
+          <td>
+            <span className="link" onClick={() => this.lnkRemoveClick(item.product._id)}>
+              Remove
+            </span>
+          </td>
         </tr>
       );
     });
@@ -44,7 +58,11 @@ class Mycart extends Component {
               <td colSpan="6"></td>
               <td>Total</td>
               <td>{CartUtil.getTotal(this.context.mycart)}</td>
-              <td><span className="link" onClick={() => this.lnkCheckoutClick()}>CHECKOUT</span></td>
+              <td>
+                <span className="link" onClick={() => this.lnkCheckoutClick()}>
+                  CHECKOUT
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -52,17 +70,21 @@ class Mycart extends Component {
     );
   }
 
-  // event-handlers
   lnkRemoveClick(id) {
     const mycart = this.context.mycart;
     const index = mycart.findIndex(x => x.product._id === id);
-    if (index !== -1) { // found, remove item
+    if (index !== -1) {
       mycart.splice(index, 1);
       this.context.setMycart(mycart);
     }
   }
 
   lnkCheckoutClick() {
+    if (!this.context.customer || !this.context.token) {
+      alert('Please login first');
+      return;
+    }
+
     if (this.context.mycart.length > 0) {
       const total = CartUtil.getTotal(this.context.mycart);
       const items = this.context.mycart;
@@ -73,45 +95,54 @@ class Mycart extends Component {
     }
   }
 
-  // apis
   apiCheckout(total, items, customer) {
-  const simpleItems = items.map(item => ({
-    product: {
-      _id: item.product._id,
-      name: item.product.name,
-      price: item.product.price,
-      category: {
-        name: item.product.category.name
-      }
-    },
-    quantity: item.quantity
-  }));
+    const simpleItems = items.map(item => ({
+      product: {
+        _id: item.product._id,
+        name: item.product.name,
+        price: item.product.price,
+        category: {
+          name: item.product.category.name
+        }
+      },
+      quantity: item.quantity
+    }));
 
-  const simpleCustomer = {
-    _id: customer._id,
-    name: customer.name,
-    phone: customer.phone,
-    email: customer.email
-  };
+    const simpleCustomer = {
+      _id: customer._id,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email
+    };
 
-  const body = {
-    total: total,
-    items: simpleItems,
-    customer: simpleCustomer
-  };
+    const body = {
+      total: total,
+      items: simpleItems,
+      customer: simpleCustomer
+    };
 
-  const config = { headers: { 'x-access-token': this.context.token } };
+    const config = { headers: { 'x-access-token': this.context.token } };
 
-  axios.post('/api/customer/checkout', body, config).then((res) => {
-    const result = res.data;
-    if (result) {
-      alert('OK BABY!');
-      this.context.setMycart([]);
-    } else {
-      alert('SORRY BABY!');
-    }
-  });
-}
+    axios.post(`${API_BASE}/customer/checkout`, body, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert('OK BABY!');
+          this.context.setMycart([]);
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('checkout error:', err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'Checkout failed';
+        alert(msg);
+      });
+  }
 }
 
 export default Mycart;

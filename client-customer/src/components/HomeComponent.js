@@ -1,7 +1,9 @@
-// client-customer/src/components/HomeComponent.js
 import axios from 'axios';
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
 
 class Home extends Component {
   constructor(props) {
@@ -17,17 +19,24 @@ class Home extends Component {
     this.apiGetHotProducts();
   }
 
-  // apis
   apiGetNewProducts() {
-    axios.get('/api/customer/products/new').then((res) => {
-      this.setState({ newprods: res.data });
-    });
+    axios.get(`${API_BASE}/customer/products/new`)
+      .then((res) => {
+        this.setState({ newprods: res.data || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetNewProducts error:', err);
+      });
   }
 
   apiGetHotProducts() {
-    axios.get('/api/customer/products/hot').then((res) => {
-      this.setState({ hotprods: res.data });
-    });
+    axios.get(`${API_BASE}/customer/products/hot`)
+      .then((res) => {
+        this.setState({ hotprods: res.data || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetHotProducts error:', err);
+      });
   }
 
   render() {

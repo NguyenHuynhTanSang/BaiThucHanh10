@@ -1,6 +1,9 @@
 import axios from 'axios';
 import React, { Component } from 'react';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Active extends Component {
   constructor(props) {
     super(props);
@@ -54,7 +57,6 @@ class Active extends Component {
     );
   }
 
-  // event-handlers
   btnActiveClick(e) {
     e.preventDefault();
     const id = this.state.txtID;
@@ -67,17 +69,27 @@ class Active extends Component {
     }
   }
 
-  // apis
   apiActive(id, token) {
-    const body = { id: id, token: token };
-    axios.post('/api/customer/active', body).then((res) => {
-      const result = res.data;
-      if (result) {
-        alert('OK BABY!');
-      } else {
-        alert('SORRY BABY!');
-      }
-    });
+    const body = { id, token };
+
+    axios.post(`${API_BASE}/customer/active`, body)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert(result.message || 'OK BABY!');
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('active error:', err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'Active failed';
+        alert(msg);
+      });
   }
 }
 

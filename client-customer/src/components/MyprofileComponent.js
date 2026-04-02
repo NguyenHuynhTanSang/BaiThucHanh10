@@ -3,8 +3,11 @@ import React, { Component } from 'react';
 import { Navigate } from 'react-router-dom';
 import MyContext from '../contexts/MyContext';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Myprofile extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -19,6 +22,7 @@ class Myprofile extends Component {
 
   render() {
     if (this.context.token === '') return (<Navigate replace to="/login" />);
+
     return (
       <div className="align-center">
         <h2 className="text-center">MY PROFILE</h2>
@@ -31,7 +35,7 @@ class Myprofile extends Component {
                   <input
                     type="text"
                     value={this.state.txtUsername}
-                    onChange={(e) => { this.setState({ txtUsername: e.target.value }) }}
+                    onChange={(e) => { this.setState({ txtUsername: e.target.value }); }}
                   />
                 </td>
               </tr>
@@ -41,7 +45,7 @@ class Myprofile extends Component {
                   <input
                     type="password"
                     value={this.state.txtPassword}
-                    onChange={(e) => { this.setState({ txtPassword: e.target.value }) }}
+                    onChange={(e) => { this.setState({ txtPassword: e.target.value }); }}
                   />
                 </td>
               </tr>
@@ -51,7 +55,7 @@ class Myprofile extends Component {
                   <input
                     type="text"
                     value={this.state.txtName}
-                    onChange={(e) => { this.setState({ txtName: e.target.value }) }}
+                    onChange={(e) => { this.setState({ txtName: e.target.value }); }}
                   />
                 </td>
               </tr>
@@ -61,7 +65,7 @@ class Myprofile extends Component {
                   <input
                     type="tel"
                     value={this.state.txtPhone}
-                    onChange={(e) => { this.setState({ txtPhone: e.target.value }) }}
+                    onChange={(e) => { this.setState({ txtPhone: e.target.value }); }}
                   />
                 </td>
               </tr>
@@ -71,7 +75,7 @@ class Myprofile extends Component {
                   <input
                     type="email"
                     value={this.state.txtEmail}
-                    onChange={(e) => { this.setState({ txtEmail: e.target.value }) }}
+                    onChange={(e) => { this.setState({ txtEmail: e.target.value }); }}
                   />
                 </td>
               </tr>
@@ -95,16 +99,15 @@ class Myprofile extends Component {
   componentDidMount() {
     if (this.context.customer) {
       this.setState({
-        txtUsername: this.context.customer.username,
-        txtPassword: this.context.customer.password,
-        txtName: this.context.customer.name,
-        txtPhone: this.context.customer.phone,
-        txtEmail: this.context.customer.email
+        txtUsername: this.context.customer.username || '',
+        txtPassword: this.context.customer.password || '',
+        txtName: this.context.customer.name || '',
+        txtPhone: this.context.customer.phone || '',
+        txtEmail: this.context.customer.email || ''
       });
     }
   }
 
-  // event-handlers
   btnUpdateClick(e) {
     e.preventDefault();
     const username = this.state.txtUsername;
@@ -115,11 +118,11 @@ class Myprofile extends Component {
 
     if (username && password && name && phone && email) {
       const customer = {
-        username: username,
-        password: password,
-        name: name,
-        phone: phone,
-        email: email
+        username,
+        password,
+        name,
+        phone,
+        email
       };
       this.apiPutCustomer(this.context.customer._id, customer);
     } else {
@@ -127,18 +130,28 @@ class Myprofile extends Component {
     }
   }
 
-  // apis
   apiPutCustomer(id, customer) {
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.put('/api/customer/customers/' + id, customer, config).then((res) => {
-      const result = res.data;
-      if (result) {
-        alert('OK BABY!');
-        this.context.setCustomer(result);
-      } else {
-        alert('SORRY BABY!');
-      }
-    });
+
+    axios.put(`${API_BASE}/customer/customers/${id}`, customer, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert('OK BABY!');
+          this.context.setCustomer(result);
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiPutCustomer error:', err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'Cannot update profile';
+        alert(msg);
+      });
   }
 }
 

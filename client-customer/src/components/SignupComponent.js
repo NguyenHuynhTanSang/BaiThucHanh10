@@ -1,6 +1,9 @@
 import axios from 'axios';
 import React, { Component } from 'react';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Signup extends Component {
   constructor(props) {
     super(props);
@@ -87,7 +90,6 @@ class Signup extends Component {
     );
   }
 
-  // event-handlers
   btnSignupClick(e) {
     e.preventDefault();
 
@@ -99,11 +101,11 @@ class Signup extends Component {
 
     if (username && password && name && phone && email) {
       const account = {
-        username: username,
-        password: password,
-        name: name,
-        phone: phone,
-        email: email
+        username,
+        password,
+        name,
+        phone,
+        email
       };
       this.apiSignup(account);
     } else {
@@ -111,12 +113,21 @@ class Signup extends Component {
     }
   }
 
-  // apis
   apiSignup(account) {
-    axios.post('/api/customer/signup', account).then((res) => {
-      const result = res.data;
-      alert(result.message);
-    });
+    axios.post(`${API_BASE}/customer/signup`, account)
+      .then((res) => {
+        const result = res.data;
+        alert(result.message || 'Sign-up success');
+      })
+      .catch((err) => {
+        console.error('signup error:', err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'Cannot sign up';
+        alert(msg);
+      });
   }
 }
 

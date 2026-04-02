@@ -3,6 +3,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import withRouter from '../utils/withRouter';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Product extends Component {
   constructor(props) {
     super(props);
@@ -43,7 +46,6 @@ class Product extends Component {
   }
 
   componentDidMount() {
-    // first: /product/...
     const params = this.props.params;
     if (params.cid) {
       this.apiGetProductsByCatID(params.cid);
@@ -53,7 +55,6 @@ class Product extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    // changed: /product/...
     const params = this.props.params;
     if (params.cid && params.cid !== prevProps.params.cid) {
       this.apiGetProductsByCatID(params.cid);
@@ -62,19 +63,26 @@ class Product extends Component {
     }
   }
 
-  // apis
   apiGetProductsByCatID(cid) {
-    axios.get('/api/customer/products/category/' + cid).then((res) => {
-      const result = res.data;
-      this.setState({ products: result });
-    });
+    axios.get(`${API_BASE}/customer/products/category/${cid}`)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ products: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetProductsByCatID error:', err);
+      });
   }
 
   apiGetProductsByKeyword(keyword) {
-    axios.get('/api/customer/products/search/' + keyword).then((res) => {
-      const result = res.data;
-      this.setState({ products: result });
-    });
+    axios.get(`${API_BASE}/customer/products/search/${keyword}`)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ products: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetProductsByKeyword error:', err);
+      });
   }
 }
 

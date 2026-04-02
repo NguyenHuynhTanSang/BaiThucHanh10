@@ -3,8 +3,11 @@ import React, { Component } from 'react';
 import { Navigate } from 'react-router-dom';
 import MyContext from '../contexts/MyContext';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Myorders extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -22,8 +25,8 @@ class Myorders extends Component {
         <tr key={item._id} className="datatable" onClick={() => this.trItemClick(item)}>
           <td>{item._id}</td>
           <td>{new Date(item.cdate).toLocaleString()}</td>
-          <td>{item.customer.name}</td>
-          <td>{item.customer.phone}</td>
+          <td>{item.customer?.name}</td>
+          <td>{item.customer?.phone}</td>
           <td>{item.total}</td>
           <td>{item.status}</td>
         </tr>
@@ -38,7 +41,14 @@ class Myorders extends Component {
             <td>{index + 1}</td>
             <td>{item.product._id}</td>
             <td>{item.product.name}</td>
-            <td><img src={'data:image/jpg;base64,' + item.product.image} width="70px" height="70px" alt="" /></td>
+            <td>
+              <img
+                src={'data:image/jpg;base64,' + item.product.image}
+                width="70px"
+                height="70px"
+                alt=""
+              />
+            </td>
             <td>{item.product.price}</td>
             <td>{item.quantity}</td>
             <td>{item.product.price * item.quantity}</td>
@@ -96,18 +106,23 @@ class Myorders extends Component {
     }
   }
 
-  // event-handlers
   trItemClick(item) {
     this.setState({ order: item });
   }
 
-  // apis
   apiGetOrdersByCustID(cid) {
-    const config = { headers: { 'x-access-token': this.context.token } };
-    axios.get('/api/customer/orders/customer/' + cid, config).then((res) => {
-      const result = res.data;
-      this.setState({ orders: result });
-    });
+    const config = {
+      headers: { 'x-access-token': this.context.token }
+    };
+
+    axios.get(`${API_BASE}/customer/orders/customer/${cid}`, config)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ orders: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetOrdersByCustID error:', err);
+      });
   }
 }
 

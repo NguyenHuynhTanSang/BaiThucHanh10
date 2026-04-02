@@ -3,6 +3,9 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import withRouter from '../utils/withRouter';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Menu extends Component {
   constructor(props) {
     super(props);
@@ -16,11 +19,14 @@ class Menu extends Component {
     this.apiGetCategories();
   }
 
-  // apis
   apiGetCategories() {
-    axios.get('/api/customer/categories').then((res) => {
-      this.setState({ categories: res.data });
-    });
+    axios.get(`${API_BASE}/customer/categories`)
+      .then((res) => {
+        this.setState({ categories: res.data || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetCategories error:', err);
+      });
   }
 
   render() {
@@ -63,7 +69,6 @@ class Menu extends Component {
     );
   }
 
-  // event-handlers
   btnSearchClick(e) {
     e.preventDefault();
     this.props.navigate('/product/search/' + this.state.txtKeyword);

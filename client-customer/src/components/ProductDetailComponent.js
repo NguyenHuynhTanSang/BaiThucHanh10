@@ -3,8 +3,11 @@ import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 import withRouter from '../utils/withRouter';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class ProductDetail extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -46,7 +49,7 @@ class ProductDetail extends Component {
                     </tr>
                     <tr>
                       <td align="right">Category:</td>
-                      <td>{prod.category.name}</td>
+                      <td>{prod.category?.name}</td>
                     </tr>
                     <tr>
                       <td align="right">Quantity:</td>
@@ -87,7 +90,6 @@ class ProductDetail extends Component {
     this.apiGetProduct(params.id);
   }
 
-  // event-handlers
   btnAdd2CartClick(e) {
     e.preventDefault();
     const product = this.state.product;
@@ -95,12 +97,12 @@ class ProductDetail extends Component {
 
     if (quantity) {
       const mycart = this.context.mycart;
-      const index = mycart.findIndex(x => x.product._id === product._id); // check if the _id exists in mycart
+      const index = mycart.findIndex(x => x.product._id === product._id);
 
-      if (index === -1) { // not found, push newItem
+      if (index === -1) {
         const newItem = { product: product, quantity: quantity };
         mycart.push(newItem);
-      } else { // increasing the quantity
+      } else {
         mycart[index].quantity += quantity;
       }
 
@@ -111,12 +113,15 @@ class ProductDetail extends Component {
     }
   }
 
-  // apis
   apiGetProduct(id) {
-    axios.get('/api/customer/products/' + id).then((res) => {
-      const result = res.data;
-      this.setState({ product: result });
-    });
+    axios.get(`${API_BASE}/customer/products/${id}`)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ product: result });
+      })
+      .catch((err) => {
+        console.error('apiGetProduct error:', err);
+      });
   }
 }
 
