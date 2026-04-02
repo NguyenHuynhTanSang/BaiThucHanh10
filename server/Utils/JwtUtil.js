@@ -1,6 +1,5 @@
-// CLI: npm install jsonwebtoken --save
 const jwt = require('jsonwebtoken');
-const MyConstants = require('./Utils');
+const MyConstants = require('./MyConstants');
 
 const JwtUtil = {
   // Tạo token
