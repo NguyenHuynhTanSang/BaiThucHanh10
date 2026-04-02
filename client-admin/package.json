@@ -1,5 +1,4 @@
 {
-  "homepage": "/admin",
   "proxy": "http://localhost:3001",
   "name": "client-admin",
   "version": "0.1.0",
