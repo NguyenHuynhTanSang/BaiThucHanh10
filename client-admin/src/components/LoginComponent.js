@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import MyContext from '../contexts/MyContext';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+
 class Login extends Component {
   static contextType = MyContext;
 
@@ -19,13 +22,12 @@ class Login extends Component {
     }
 
     try {
-      const res = await axios.post('/api/admin/login', { username, password });
+      const res = await axios.post(`${API_BASE}/admin/login`, { username, password });
       const result = res.data;
 
-      // debug (xem backend trả gì)
       console.log('login res.data =', result);
 
-      const token = result?.token; // backend phải trả token
+      const token = result?.token;
 
       if (!token) {
         alert(result?.message || 'Login failed: token not found in response');
@@ -33,10 +35,9 @@ class Login extends Component {
       }
 
       this.context.setToken(token);
-      this.context.setUsername(result?.username || username);
+      this.context.setUsername(result?.username || result?.admin?.username || username);
 
-      // chuyển trang (khuyên dùng replace để không quay lại login)
-      window.location.replace('/admin/category');
+      window.location.replace('/category');
     } catch (err) {
       console.error('login error:', err);
       const msg = err?.response?.data?.message || err.message || 'cannot login';
