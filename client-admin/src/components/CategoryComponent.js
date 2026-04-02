@@ -1,10 +1,9 @@
-import axios from 'axios';
+import API from '../api';
 import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 import CategoryDetail from './CategoryDetailComponent';
 
 class Category extends Component {
-  
   static contextType = MyContext;
 
   constructor(props) {
@@ -24,23 +23,20 @@ class Category extends Component {
   trItemClick = (item) => {
     this.setState({ itemSelected: item });
   };
-  updateCategories = (categories) => {
-  const list = this.normalizeCategories(categories);
-  this.setState({ categories: list });
-};
 
-  // Helper: chuẩn hoá response về mảng categories
+  updateCategories = (categories) => {
+    const list = this.normalizeCategories(categories);
+    this.setState({ categories: list });
+  };
+
   normalizeCategories = (data) => {
     if (Array.isArray(data)) return data;
 
-    // các kiểu hay gặp: {categories: []}, {categorys: []}, {data: []}, {result: []}
     if (data && typeof data === 'object') {
       if (Array.isArray(data.categories)) return data.categories;
       if (Array.isArray(data.categorys)) return data.categorys;
       if (Array.isArray(data.data)) return data.data;
       if (Array.isArray(data.result)) return data.result;
-
-      // đôi khi: { success: true, categories: [...] }
       if (data.success && Array.isArray(data.categories)) return data.categories;
     }
 
@@ -50,11 +46,10 @@ class Category extends Component {
   apiGetCategories = () => {
     const token = this.context?.token;
 
-    // nếu chưa có token thì báo rõ (đỡ trắng trang)
     if (!token) {
       this.setState({
         categories: [],
-        error: 'Missing token. Please login again then open /admin/category.',
+        error: 'Missing token. Please login again then open /category.',
       });
       return;
     }
@@ -65,14 +60,9 @@ class Category extends Component {
 
     this.setState({ loading: true, error: '' });
 
-    axios
-      .get('/api/admin/categories', config)
+    API.get('/admin/categories', config)
       .then((res) => {
         const list = this.normalizeCategories(res.data);
-
-        // debug khi cần:
-        // console.log('GET /api/admin/categories =>', res.data);
-
         this.setState({ categories: list, loading: false });
       })
       .catch((err) => {
@@ -87,8 +77,7 @@ class Category extends Component {
         if (status === 401 || status === 403) {
           friendly = 'Unauthorized. Token invalid/expired. Please login again.';
         } else if (status === 404) {
-          friendly =
-            'API not found (404). Check server route: /api/admin/categories';
+          friendly = 'API not found (404). Check server route: /api/admin/categories';
         }
 
         console.error('apiGetCategories error full:', err);
@@ -153,17 +142,15 @@ class Category extends Component {
 
         <div className="inline" />
 
-        <CategoryDetail 
-        item={this.state.itemSelected}
-        updateCategories={this.updateCategories} />
+        <CategoryDetail
+          item={this.state.itemSelected}
+          updateCategories={this.updateCategories}
+        />
 
         <div className="float-clear" />
       </div>
     );
   }
-  
 }
-
-
 
 export default Category;

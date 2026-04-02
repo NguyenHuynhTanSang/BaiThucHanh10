@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
-import axios from 'axios';
+import API from '../api';
 import MyContext from '../contexts/MyContext';
-
-const API_BASE =
-  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
 
 class Login extends Component {
   static contextType = MyContext;
@@ -22,7 +19,7 @@ class Login extends Component {
     }
 
     try {
-      const res = await axios.post(`${API_BASE}/admin/login`, { username, password });
+      const res = await API.post('/admin/login', { username, password });
       const result = res.data;
 
       console.log('login res.data =', result);
@@ -35,9 +32,12 @@ class Login extends Component {
       }
 
       this.context.setToken(token);
-      this.context.setUsername(result?.username || result?.admin?.username || username);
 
-      window.location.replace('/category');
+      if (this.context.setUsername) {
+        this.context.setUsername(result?.username || result?.admin?.username || username);
+      }
+
+      window.location.replace('/admin/category');
     } catch (err) {
       console.error('login error:', err);
       const msg = err?.response?.data?.message || err.message || 'cannot login';

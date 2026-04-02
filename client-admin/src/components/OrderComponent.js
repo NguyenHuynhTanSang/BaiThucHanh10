@@ -1,9 +1,9 @@
-import axios from 'axios';
+import API from '../api';
 import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 
 class Order extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -19,8 +19,8 @@ class Order extends Component {
         <tr key={item._id} className="datatable" onClick={() => this.trItemClick(item)}>
           <td>{item._id}</td>
           <td>{new Date(item.cdate).toLocaleString()}</td>
-          <td>{item.customer.name}</td>
-          <td>{item.customer.phone}</td>
+          <td>{item.customer?.name}</td>
+          <td>{item.customer?.phone}</td>
           <td>{item.total}</td>
           <td>{item.status}</td>
           <td>
@@ -111,7 +111,6 @@ class Order extends Component {
     this.apiGetOrders();
   }
 
-  // event-handlers
   trItemClick(item) {
     this.setState({ order: item });
   }
@@ -124,27 +123,36 @@ class Order extends Component {
     this.apiPutOrderStatus(id, 'CANCELED');
   }
 
-  // apis
   apiGetOrders() {
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.get('/api/admin/orders', config).then((res) => {
-      const result = res.data;
-      this.setState({ orders: result });
-    });
+
+    API.get('/admin/orders', config)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ orders: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetOrders error:', err);
+      });
   }
 
   apiPutOrderStatus(id, status) {
     const body = { status: status };
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.put('/api/admin/orders/status/' + id, body, config).then((res) => {
-      const result = res.data;
-      if (result) {
-        this.apiGetOrders();
-        this.setState({ order: result });
-      } else {
-        alert('SORRY BABY!');
-      }
-    });
+
+    API.put(`/admin/orders/status/${id}`, body, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          this.apiGetOrders();
+          this.setState({ order: result });
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiPutOrderStatus error:', err);
+      });
   }
 }
 

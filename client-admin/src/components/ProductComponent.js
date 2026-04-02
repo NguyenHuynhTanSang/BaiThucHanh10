@@ -1,4 +1,4 @@
-import axios from 'axios';
+import API from '../api';
 import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 import ProductDetail from './ProductDetailComponent';
@@ -20,7 +20,6 @@ class Product extends Component {
     this.apiGetProducts(this.state.curPage);
   }
 
-  // event-handlers
   lnkPageClick = (page) => {
     this.apiGetProducts(page);
   };
@@ -28,18 +27,17 @@ class Product extends Component {
   trItemClick = (item) => {
     this.setState({ itemSelected: item });
   };
-  updateProducts = (products, noPages) => {
-  this.setState({ products: products, noPages: noPages });
-};
 
-  // apis
+  updateProducts = (products, noPages) => {
+    this.setState({ products: products || [], noPages: noPages || 0 });
+  };
+
   apiGetProducts = (page) => {
     const config = { headers: { 'x-access-token': this.context.token } };
 
-    axios
-      .get('/api/admin/products?page=' + page, config)
+    API.get(`/admin/products?page=${page}`, config)
       .then((res) => {
-        const result = res.data; // { products, noPages, curPage }
+        const result = res.data;
         this.setState({
           products: result.products || [],
           noPages: result.noPages || 0,
@@ -118,10 +116,10 @@ class Product extends Component {
 
         <div className="inline" />
 
-        <ProductDetail 
-            item={this.state.itemSelected} 
-            curPage={this.state.curPage}
-            updateProducts={this.updateProducts}
+        <ProductDetail
+          item={this.state.itemSelected}
+          curPage={this.state.curPage}
+          updateProducts={this.updateProducts}
         />
 
         <div className="float-clear" />

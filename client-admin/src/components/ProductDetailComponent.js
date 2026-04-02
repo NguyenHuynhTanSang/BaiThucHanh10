@@ -1,4 +1,4 @@
-import axios from 'axios';
+import API from '../api';
 import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 
@@ -13,8 +13,8 @@ class ProductDetail extends Component {
       txtName: '',
       txtPrice: 0,
       cmbCategory: '',
-      imgProduct: '', // preview url (dataURL)
-      fileImage: null, // file upload
+      imgProduct: '',
+      fileImage: null,
     };
   }
 
@@ -37,7 +37,6 @@ class ProductDetail extends Component {
     }
   }
 
-  // event-handlers
   previewImage = (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -46,149 +45,171 @@ class ProductDetail extends Component {
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-      this.setState({ imgProduct: evt.target.result }); // dataURL
+      this.setState({ imgProduct: evt.target.result });
     };
     reader.readAsDataURL(file);
   };
 
-  btnAddClick(e) {
-  e.preventDefault();
-  const name = this.state.txtName;
-  const price = parseInt(this.state.txtPrice);
-  const category = this.state.cmbCategory;
-  const image = this.state.imgProduct.replace(/^data:image\/[a-z]+;base64,/, '');
+  btnAddClick = (e) => {
+    e.preventDefault();
 
-  if (name && price && category && image) {
-    const prod = { name: name, price: price, category: category, image: image };
-    this.apiPostProduct(prod);
-  } else {
-    alert('Please input name and price and category and image');
-  }
-}
+    const name = this.state.txtName.trim();
+    const price = parseInt(this.state.txtPrice);
+    const category = this.state.cmbCategory;
+    const image = this.state.imgProduct
+      ? this.state.imgProduct.replace(/^data:image\/[a-z]+;base64,/, '')
+      : '';
+
+    if (name && price && category && image) {
+      const prod = { name, price, category, image };
+      this.apiPostProduct(prod);
+    } else {
+      alert('Please input name and price and category and image');
+    }
+  };
 
   btnUpdateClick = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const id = this.state.txtID;
-  const name = this.state.txtName;
-  const price = parseInt(this.state.txtPrice);
-  const category = this.state.cmbCategory;
+    const id = this.state.txtID;
+    const name = this.state.txtName.trim();
+    const price = parseInt(this.state.txtPrice);
+    const category = this.state.cmbCategory;
+    const image = this.state.imgProduct
+      ? this.state.imgProduct.replace(/^data:image\/[a-z]+;base64,/, '')
+      : '';
 
-  const image = this.state.imgProduct
-    ? this.state.imgProduct.replace(/^data:image\/[a-z]+;base64,/, '')
-    : '';
-
-  if (id && name && price && category && image) {
-    const prod = { id: id, name: name, price: price, category: category, image: image };
-    this.apiPutProduct(prod);
-  } else {
-    alert('Please input id and name and price and category and image');
-  }
-};
+    if (id && name && price && category && image) {
+      const prod = { id, name, price, category, image };
+      this.apiPutProduct(prod);
+    } else {
+      alert('Please input id and name and price and category and image');
+    }
+  };
 
   btnDeleteClick = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (window.confirm('ARE YOU SURE?')) {
-    const id = this.state.txtID;
-    if (id) {
-      this.apiDeleteProduct(id);
-    } else {
-      alert('Please input id');
+    if (window.confirm('ARE YOU SURE?')) {
+      const id = this.state.txtID;
+      if (id) {
+        this.apiDeleteProduct(id);
+      } else {
+        alert('Please input id');
+      }
     }
-  }
-};
-  
+  };
 
-  // apis
   apiGetCategories = () => {
     const config = { headers: { 'x-access-token': this.context.token } };
 
-    axios
-      .get('/api/admin/categories', config)
+    API.get('/admin/categories', config)
       .then((res) => {
-        // thường res.data là mảng categories
         const result = Array.isArray(res.data)
           ? res.data
           : (res.data.categories || res.data.categorys || res.data.data || []);
+
         this.setState({ categories: result });
 
-        // set default category nếu chưa có
         if (!this.state.cmbCategory && result.length > 0) {
           this.setState({ cmbCategory: result[0]._id });
         }
       })
-      .catch((err) => console.error('apiGetCategories error:', err));
+      .catch((err) => {
+        console.error('apiGetCategories error:', err);
+      });
   };
+
   apiDeleteProduct = (id) => {
-  const config = { headers: { 'x-access-token': this.context.token } };
+    const config = { headers: { 'x-access-token': this.context.token } };
 
-  axios
-    .delete('/api/admin/products/' + id, config)
-    .then((res) => {
-      const result = res.data;
-      if (result) {
-        alert('OK BABY!');
-        this.apiGetProductsAfterChange(); // refresh list
-        // clear form
-        this.setState({ txtID: '', txtName: '', txtPrice: 0, imgProduct: '', fileImage: null });
-      } else {
+    API.delete(`/admin/products/${id}`, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert('OK BABY!');
+          this.apiGetProducts();
+          this.setState({
+            txtID: '',
+            txtName: '',
+            txtPrice: 0,
+            imgProduct: '',
+            fileImage: null,
+          });
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiDeleteProduct error:', err);
         alert('SORRY BABY!');
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      alert('SORRY BABY!');
-    });
-};
-apiPutProduct = (prod) => {
-  const config = { headers: { 'x-access-token': this.context.token } };
+      });
+  };
 
-  axios
-    .put('/api/admin/products', prod, config)
-    .then((res) => {
-      const result = res.data;
-      if (result) {
-        alert('OK BABY!');
-        // refresh list bên trái
-        if (this.apiGetProductsAfterChange) this.apiGetProductsAfterChange();
-        else if (this.apiGetProducts) this.apiGetProducts();
-      } else {
+  apiPutProduct = (prod) => {
+    const config = { headers: { 'x-access-token': this.context.token } };
+
+    API.put('/admin/products', prod, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert('OK BABY!');
+          this.apiGetProducts();
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiPutProduct error:', err);
         alert('SORRY BABY!');
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      alert('SORRY BABY!');
-    });
-};
-apiPostProduct(prod) {
-  const config = { headers: { 'x-access-token': this.context.token } };
-  axios.post('/api/admin/products', prod, config).then((res) => {
-    const result = res.data;
-    if (result) {
-      alert('OK BABY!');
-      this.apiGetProducts();
-    } else {
-      alert('SORRY BABY!');
-    }
-  });
-}
+      });
+  };
 
-apiGetProducts() {
-  const config = { headers: { 'x-access-token': this.context.token } };
-  axios.get('/api/admin/products?page=' + this.props.curPage, config).then((res) => {
-    const result = res.data;
-    this.props.updateProducts(result.products, result.noPages);
-  });
-}
+  apiPostProduct = (prod) => {
+    const config = { headers: { 'x-access-token': this.context.token } };
+
+    API.post('/admin/products', prod, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          alert('OK BABY!');
+          this.apiGetProducts();
+          this.setState({
+            txtID: '',
+            txtName: '',
+            txtPrice: 0,
+            imgProduct: '',
+            fileImage: null,
+          });
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiPostProduct error:', err);
+        alert('SORRY BABY!');
+      });
+  };
+
+  apiGetProducts = () => {
+    const config = { headers: { 'x-access-token': this.context.token } };
+
+    API.get(`/admin/products?page=${this.props.curPage}`, config)
+      .then((res) => {
+        const result = res.data;
+        this.props.updateProducts(result.products || [], result.noPages || 0);
+      })
+      .catch((err) => {
+        console.error('apiGetProducts error:', err);
+      });
+  };
+
   render() {
     const cates = (this.state.categories || []).map((cate) => (
       <option key={cate._id} value={cate._id}>
         {cate.name}
       </option>
     ));
-    
 
     return (
       <div className="float-right">
@@ -253,9 +274,9 @@ apiGetProducts() {
               <tr>
                 <td></td>
                 <td>
-                  <input type="submit" value="ADD NEW" onClick={(e) => this.btnAddClick(e)} />
-                  <input type="submit" value="UPDATE" onClick={(e) => this.btnUpdateClick(e)} />
-                  <input type="submit" value="DELETE" onClick={(e) => this.btnDeleteClick(e)} />
+                  <input type="submit" value="ADD NEW" onClick={this.btnAddClick} />
+                  <input type="submit" value="UPDATE" onClick={this.btnUpdateClick} />
+                  <input type="submit" value="DELETE" onClick={this.btnDeleteClick} />
                 </td>
               </tr>
 

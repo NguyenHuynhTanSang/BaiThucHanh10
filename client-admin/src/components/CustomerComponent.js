@@ -1,9 +1,9 @@
-import axios from 'axios';
+import API from '../api';
 import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 
 class Customer extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -57,8 +57,8 @@ class Customer extends Component {
         <tr key={item._id} className="datatable" onClick={() => this.trOrderClick(item)}>
           <td>{item._id}</td>
           <td>{new Date(item.cdate).toLocaleString()}</td>
-          <td>{item.customer.name}</td>
-          <td>{item.customer.phone}</td>
+          <td>{item.customer?.name}</td>
+          <td>{item.customer?.phone}</td>
           <td>{item.total}</td>
           <td>{item.status}</td>
         </tr>
@@ -160,7 +160,6 @@ class Customer extends Component {
     this.apiGetCustomers();
   }
 
-  // event-handlers
   trCustomerClick(item) {
     this.setState({ orders: [], order: null });
     this.apiGetOrdersByCustID(item._id);
@@ -178,42 +177,61 @@ class Customer extends Component {
     this.apiGetCustomerSendmail(item._id);
   }
 
-  // apis
   apiGetCustomers() {
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.get('/api/admin/customers', config).then((res) => {
-      const result = res.data;
-      this.setState({ customers: result });
-    });
+
+    API.get('/admin/customers', config)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ customers: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetCustomers error:', err);
+      });
   }
 
   apiGetOrdersByCustID(cid) {
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.get('/api/admin/orders/customer/' + cid, config).then((res) => {
-      const result = res.data;
-      this.setState({ orders: result });
-    });
+
+    API.get(`/admin/orders/customer/${cid}`, config)
+      .then((res) => {
+        const result = res.data;
+        this.setState({ orders: result || [] });
+      })
+      .catch((err) => {
+        console.error('apiGetOrdersByCustID error:', err);
+      });
   }
 
   apiPutCustomerDeactive(id, token) {
     const body = { token: token };
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.put('/api/admin/customers/deactive/' + id, body, config).then((res) => {
-      const result = res.data;
-      if (result) {
-        this.apiGetCustomers();
-      } else {
-        alert('SORRY BABY!');
-      }
-    });
+
+    API.put(`/admin/customers/deactive/${id}`, body, config)
+      .then((res) => {
+        const result = res.data;
+        if (result) {
+          this.apiGetCustomers();
+        } else {
+          alert('SORRY BABY!');
+        }
+      })
+      .catch((err) => {
+        console.error('apiPutCustomerDeactive error:', err);
+      });
   }
 
   apiGetCustomerSendmail(id) {
     const config = { headers: { 'x-access-token': this.context.token } };
-    axios.get('/api/admin/customers/sendmail/' + id, config).then((res) => {
-      const result = res.data;
-      alert(result.message);
-    });
+
+    API.get(`/admin/customers/sendmail/${id}`, config)
+      .then((res) => {
+        const result = res.data;
+        alert(result.message);
+      })
+      .catch((err) => {
+        console.error('apiGetCustomerSendmail error:', err);
+      });
   }
 }
 
