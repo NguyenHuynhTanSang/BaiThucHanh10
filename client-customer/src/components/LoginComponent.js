@@ -3,8 +3,12 @@ import React, { Component } from 'react';
 import MyContext from '../contexts/MyContext';
 import withRouter from '../utils/withRouter';
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE || 'https://shoppingonline-server.onrender.com/api';
+// nếu URL backend của bạn khác thì thay lại cho đúng
+
 class Login extends Component {
-  static contextType = MyContext; // using this.context to access global state
+  static contextType = MyContext;
 
   constructor(props) {
     super(props);
@@ -58,31 +62,42 @@ class Login extends Component {
     );
   }
 
-  // event-handlers
   btnLoginClick(e) {
     e.preventDefault();
     const username = this.state.txtUsername;
     const password = this.state.txtPassword;
+
     if (username && password) {
-      const account = { username: username, password: password };
+      const account = { username, password };
       this.apiLogin(account);
     } else {
       alert('Please input username and password');
     }
   }
 
-  // apis
   apiLogin(account) {
-    axios.post('/api/customer/login', account).then((res) => {
-      const result = res.data;
-      if (result.success === true) {
-        this.context.setToken(result.token);
-        this.context.setCustomer(result.customer);
-        this.props.navigate('/home');
-      } else {
-        alert(result.message);
-      }
-    });
+    axios.post(`${API_BASE}/customer/login`, account)
+      .then((res) => {
+        const result = res.data;
+        console.log('customer login result =', result);
+
+        if (result.success === true && result.token) {
+          this.context.setToken(result.token);
+          this.context.setCustomer(result.customer);
+          this.props.navigate('/home');
+        } else {
+          alert(result.message || 'Login failed');
+        }
+      })
+      .catch((err) => {
+        console.error('customer login error:', err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err.message ||
+          'Cannot login';
+        alert(msg);
+      });
   }
 }
 
